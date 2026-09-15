@@ -6,11 +6,7 @@ app = Flask(__name__)
 CONFIRMATION = os.environ.get("VK_CONFIRMATION", "")
 SECRET = os.environ.get("VK_SECRET", "")
 
-@app.get("/")
-def home():
-    return "Ночная Бабка работает"
-
-@app.post("/callback")
+@app.route("/callback", methods=["GET", "POST"])
 def callback():
     data = request.get_json(silent=True) or {}
 
@@ -21,6 +17,10 @@ def callback():
         return "invalid secret", 403
 
     return "ok", 200
+
+@app.route("/", methods=["GET"])
+def home():
+    return "Ночная Бабка работает"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "10000"))
