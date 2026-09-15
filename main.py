@@ -1,4 +1,5 @@
 import os
+import random
 import requests
 from flask import Flask, request
 
@@ -9,6 +10,12 @@ SECRET = os.environ.get("VK_SECRET", "")
 VK_TOKEN = os.environ.get("VK_TOKEN", "")
 API_VERSION = "5.199"
 
+STORIES = [
+    "Говорят, в старом доме ночью иногда слышны шаги на втором этаже. Только второго этажа там нет.",
+    "Один мужик каждую ночь видел в окне напротив силуэт человека. Однажды он понял, что смотрит в окно собственного дома.",
+    "В лесу турист услышал, как кто-то позвал его по имени. Он пошёл на голос. Потом услышал тот же голос уже позади себя.",
+]
+
 
 def send_message(user_id, text):
     url = "https://api.vk.com/method/messages.send"
@@ -17,7 +24,7 @@ def send_message(user_id, text):
         "access_token": VK_TOKEN,
         "v": API_VERSION,
         "user_id": user_id,
-        "random_id": 0,
+        "random_id": random.randint(1, 2147483647),
         "message": text,
     }
 
@@ -37,16 +44,28 @@ def callback():
 
     if data.get("type") == "message_new":
         message = data.get("object", {}).get("message", {})
-
         user_id = message.get("from_id")
-        text = message.get("text", "").strip()
+        text = message.get("text", "").strip().lower()
 
-        if user_id and text:
-            send_message(
-                user_id,
-                "Ночная Бабка услышала тебя. 🦇\n\n"
-                f"Ты написал: {text}"
-            )
+        if user_id:
+            if text in ["помощь", "help", "меню"]:
+                reply = (
+                    "🦇 Ночная Бабка\n\n"
+                    "Напиши:\n"
+                    "«история» — получить страшную историю\n"
+                    "«помощь» — показать это меню"
+                )
+
+            elif text in ["история", "страшилка", "страшная история"]:
+                reply = "🌑 Вот тебе история...\n\n" + random.choice(STORIES)
+
+            else:
+                reply = (
+                    "🦇 Ночная Бабка услышала тебя.\n\n"
+                    "Напиши «история», если хочешь немного испортить себе сон."
+                )
+
+            send_message(user_id, reply)
 
     return "ok", 200
 
