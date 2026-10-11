@@ -48,14 +48,14 @@ if data.get("type") == "message_new":
     if user_id:
         if text in ["помощь", "help", "меню"]:
             reply = (
-                "🦇 Ночная Бабка\n\n"
+                "🦇 NIGHT BABKA\n\n"
                 "Напиши:\n"
                 "«история» — получить страшную историю\n"
                 "«помощь» — показать это меню"
             )
 
         elif text in ["история", "страшилка", "страшная история"]:
-            reply = "🌑 Вот тебе история...\n\n" + random.choice(STORIES)
+            reply = "🌑 NIGHT BABKA\n\n" + random.choice(STORIES)
 
         else:
             return "ok", 200
@@ -66,7 +66,7 @@ return "ok", 200
 
 @app.route("/", methods=["GET"])
 def home():
-return "Ночная Бабка работает"
+return "NIGHT BABKA работает"
 
 if name == "main":
 port = int(os.environ.get("PORT", "10000"))
