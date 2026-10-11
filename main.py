@@ -3,7 +3,7 @@ import random
 import requests
 from flask import Flask, request
 
-app = Flask(name)
+app = Flask(__name__)
 
 CONFIRMATION = os.environ.get("VK_CONFIRMATION", "")
 SECRET = os.environ.get("VK_SECRET", "")
@@ -11,41 +11,45 @@ VK_TOKEN = os.environ.get("VK_TOKEN", "")
 API_VERSION = "5.199"
 
 STORIES = [
-"Говорят, в старом доме ночью иногда слышны шаги на втором этаже. Только второго этажа там нет.",
-"Один мужик каждую ночь видел в окне напротив силуэт человека. Однажды он понял, что смотрит в окно собственного дома.",
-"В лесу турист услышал, как кто-то позвал его по имени. Он пошёл на голос. Потом услышал тот же голос уже позади себя.",
+    "Говорят, в старом доме ночью иногда слышны шаги на втором этаже. Только второго этажа там нет.",
+    "Один мужик каждую ночь видел в окне напротив силуэт человека. Однажды он понял, что смотрит в окно собственного дома.",
+    "В лесу турист услышал, как кто-то позвал его по имени. Он пошёл на голос. Потом услышал тот же голос уже позади себя.",
 ]
 
-def send_message(user_id, text):
-url = "https://api.vk.com/method/messages.send"
 
-params = {
-    "access_token": VK_TOKEN,
-    "v": API_VERSION,
-    "user_id": user_id,
-    "random_id": random.randint(1, 2147483647),
-    "message": text,
-}
+def send_message(user_id, message_text):
+    url = "https://api.vk.com/method/messages.send"
 
-response = requests.post(url, params=params, timeout=10)
-return response.json()
+    params = {
+        "access_token": VK_TOKEN,
+        "v": API_VERSION,
+        "user_id": user_id,
+        "random_id": random.randint(1, 2147483647),
+        "message": message_text,
+    }
+
+    response = requests.post(url, params=params, timeout=10)
+    return response.json()
+
 
 @app.route("/callback", methods=["GET", "POST"])
 def callback():
-data = request.get_json(silent=True) or {}
+    data = request.get_json(silent=True) or {}
 
-if data.get("type") == "confirmation":
-    return CONFIRMATION, 200
+    if data.get("type") == "confirmation":
+        return CONFIRMATION, 200
 
-if SECRET and data.get("secret") != SECRET:
-    return "invalid secret", 403
+    if SECRET and data.get("secret") != SECRET:
+        return "invalid secret", 403
 
-if data.get("type") == "message_new":
-    message = data.get("object", {}).get("message", {})
-    user_id = message.get("from_id")
-    text = message.get("text", "").strip().lower()
+    if data.get("type") == "message_new":
+        message = data.get("object", {}).get("message", {})
+        user_id = message.get("from_id")
+        text = message.get("text", "").strip().lower()
 
-    if user_id:
+        if not user_id:
+            return "ok", 200
+
         if text in ["помощь", "help", "меню"]:
             reply = (
                 "🦇 NIGHT BABKA\n\n"
@@ -62,12 +66,14 @@ if data.get("type") == "message_new":
 
         send_message(user_id, reply)
 
-return "ok", 200
+    return "ok", 200
+
 
 @app.route("/", methods=["GET"])
 def home():
-return "NIGHT BABKA работает"
+    return "NIGHT BABKA работает"
 
-if name == "main":
-port = int(os.environ.get("PORT", "10000"))
-app.run(host="0.0.0.0", port=port)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", "10000"))
+    app.run(host="0.0.0.0", port=port)
